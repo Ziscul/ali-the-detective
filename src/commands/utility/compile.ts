@@ -35,7 +35,7 @@ export default {
 					.setLabel('Insert Code')
 					.setStyle(2)
 					.setEmoji({
-						id: '1036058059719589928'
+						id: '1106795011737133118'
 					}),
 			),
 		},

@@ -27,7 +27,7 @@ export default class BaseClient extends Client {
 		void connect(process.env.mongoKey as string);
 
 		void this.login(process.env.token).then(async () => {
-			this.owner = this.users.fetch('893211748767768606');
+			this.owner = this.users.fetch('1094120827601047653');
 			this.user?.setPresence({
 				activities: [
 					{

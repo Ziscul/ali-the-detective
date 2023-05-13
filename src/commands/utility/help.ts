@@ -89,28 +89,28 @@ export default {
 						.setLabel('Home')
 						.setStyle(2)
 						.setEmoji({
-							id: '1034529823143501834'
+							id: '1106760305352118314'
 						}),
 					new ButtonBuilder()
 						.setCustomId('button-contact')
 						.setLabel('Contact')
 						.setStyle(2)
 						.setEmoji({
-							id: '1034529821037953055'
+							id: '1106760310779551815'
 						}),
 					new ButtonBuilder()
 						.setCustomId('button-stats')
 						.setLabel('Statistics')
 						.setStyle(2)
 						.setEmoji({
-							id: '1034529819024691240'
+							id: '1106760314164350987'
 						}),
 					new ButtonBuilder()
 						.setLabel('Server')
 						.setStyle(5)
-						.setURL('https://discord.gg/rztpkEJQcg')
+						.setURL('https://discord.gg/2F73YSej3w')
 						.setEmoji({
-							id: '1034529816562643045'
+							id: '1106778640856916099'
 						}),
 				),
 			},
@@ -124,7 +124,7 @@ export default {
 					})
 					.setImage('https://i.ibb.co/Tgq1kXc/standard-1.gif')
 					.setFooter({
-						text: client.commands.size.toString() + ' commands in total',
+						text: interaction.user.username,
 						iconURL: interaction.user.displayAvatarURL({ extension: 'png' }),
 					})
 					.setColor(0x4b9cd3)
@@ -134,7 +134,7 @@ export default {
 						.setTitle(formatString(directory) + ' Commands')
 						.setDescription(
 							category.commands.map((cmd: any) => 
-								`</${cmd.name}:${cmd.id}>\n<:connection:1036070328843120660> ${cmd.description}`,
+								`</${cmd.name}:${cmd.id}>\n<:connector:1106760308887928852> ${cmd.description}`,
 							).join('\n'),
 						)
 						.setFooter({
@@ -146,8 +146,8 @@ export default {
 				stats: new EmbedBuilder()
 					.setTitle('Statistics')
 					.addFields({
-						name: 'Ping Latency',
-						value: '```yaml\nAPI: ' +
+						name: 'Realtime Ping',
+						value: '```yaml\nWebsocket Heartbeat: ' +
 							client.ws.ping +
 							'ms\nMessage: ' +
 							Math.floor(
@@ -162,7 +162,7 @@ export default {
 						inline: true,
 					}, {
 						name: 'Author',
-						value: '```yaml\nDiscord: ' + await client.owner.then((user: User) => `${user.username}#${user.discriminator}`) + '\nGithub: Zeptar1069```',
+						value: '```yaml\nDiscord: ' + await client.owner.then((user: User) => `${user.username}#${user.discriminator}`) + '\nGithub: Ziscul```',
 						inline: true,
 					}, {
 						name: 'Bot Status',
@@ -232,6 +232,7 @@ export default {
 
 			await i.editReply({
 				embeds: [embeds.main(directory, category)],
+				components: []
 			});
 		});
 
@@ -272,14 +273,14 @@ export default {
 
 			if (i.customId === 'button-stats') {
 				await i.deferUpdate();
-				await i.editReply({ content: 'Getting ready...', embeds: [] }).then(async () =>
+				await i.editReply({ content: 'Timing latency...', embeds: [] }).then(async () =>
 					setTimeout(async () =>
 						await i.editReply({
 							content: null,
 							embeds: [embeds.stats],
 						}),
 					1000,
-					));
+				));
 			}
 		});
 	},
