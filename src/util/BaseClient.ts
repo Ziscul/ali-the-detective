@@ -2,9 +2,7 @@ import { Client, Collection, ActivityType, GatewayIntentBits, Partials } from 'd
 import { connect, set } from 'mongoose';
 
 export default class BaseClient extends Client {
-	commands: Collection<unknown, unknown>;
-	owner: any;
-
+	commands: Collection<string, string | number | object>;
 	constructor() {
 		super({
 			intents: [
@@ -21,13 +19,11 @@ export default class BaseClient extends Client {
 		});
 
 		this.commands = new Collection();
-		this.owner = null;
 
 		void set('strictQuery', false);
 		void connect(process.env.mongoKey as string);
 
 		void this.login(process.env.token).then(async () => {
-			this.owner = this.users.fetch('1094120827601047653');
 			this.user?.setPresence({
 				activities: [
 					{

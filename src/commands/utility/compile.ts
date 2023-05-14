@@ -7,10 +7,6 @@ export default {
 	type: ApplicationCommandType.ChatInput,
 	run: async (_client: BaseClient, interaction: CommandInteraction, _args: string[]) => {
 		/* Types */
-		type Components = {
-			component1: any;
-		};
-
 		type Embeds = {
 			main: EmbedBuilder;
 			fail: EmbedBuilder;
@@ -20,25 +16,18 @@ export default {
 			collector1: InteractionCollector<ButtonInteraction<CacheType>>;
 		}
 
-		type Inputs = {
-			language: TextInputBuilder;
-			code: TextInputBuilder;
-		}
-
 		/* Interaction */
 		await interaction.deferReply({ ephemeral: false });
 
-		const components: Components = {
-			component1: new ActionRowBuilder().addComponents(
-				new ButtonBuilder()
-					.setCustomId('code')
-					.setLabel('Insert Code')
-					.setStyle(2)
-					.setEmoji({
-						id: '1106795011737133118'
-					}),
-			),
-		},
+		const component = new ActionRowBuilder<ButtonBuilder>().addComponents(
+			new ButtonBuilder()
+				.setCustomId('code')
+				.setLabel('Insert Code')
+				.setStyle(2)
+				.setEmoji({
+					id: '1106795011737133118'
+				}),
+		),
 
 			embeds: Embeds = {
 				main: new EmbedBuilder()
@@ -57,7 +46,7 @@ export default {
 					.setColor(0xfa5f55),
 			},
 
-			msg: Message = await interaction.followUp({ embeds: [embeds.main], components: [components.component1] }),
+			msg: Message = await interaction.followUp({ embeds: [embeds.main], components: [component] }),
 
 			collectors: Collectors = {
 				collector1: msg.createMessageComponentCollector({
@@ -65,9 +54,9 @@ export default {
 				}),
 			};
 
-		collectors.collector1.on('collect', async (i: any) => {
+		collectors.collector1.on('collect', async i => {
 			if (i.user.id !== interaction.user.id) {
-				return await i.followUp({
+				await i.followUp({
 					embeds: [embeds.fail],
 					ephemeral: true,
 				});
@@ -78,32 +67,24 @@ export default {
 					.setCustomId('modal-compile')
 					.setTitle('Compile Code'),
 
-					inputs: Inputs = {
-						language: new TextInputBuilder()
+					inputLanguage: TextInputBuilder = new TextInputBuilder()
 							.setCustomId('language-input')
 							.setLabel('Programming Language')
 							.setPlaceholder('Enter what language your code is in here')
 							.setStyle(TextInputStyle.Short)
 							.setMaxLength(20)
 							.setRequired(true),
-						code: new TextInputBuilder()
-							.setCustomId('code-input')
-							.setLabel('Code')
-							.setPlaceholder('Enter your code to evaluate here')
-							.setStyle(TextInputStyle.Paragraph)
-							.setRequired(true),
-					},
 
-					actionRows: any = {
-						first: new ActionRowBuilder().addComponents(
-							inputs.language,
-						),
-						second: new ActionRowBuilder().addComponents(
-							inputs.code,
-						)
-					};
+					inputCode: TextInputBuilder = new TextInputBuilder()
+						.setCustomId('code-input')
+						.setLabel('Code')
+						.setPlaceholder('Enter your code to evaluate here')
+						.setStyle(TextInputStyle.Paragraph)
+						.setRequired(true),
 
-				modal.addComponents(actionRows.first, actionRows.second);
+					actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(inputLanguage, inputCode);
+
+				modal.addComponents([actionRow]);
 				await i.showModal(modal);
 			}
 		});

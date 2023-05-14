@@ -15,7 +15,6 @@ import {
 	StringSelectMenuInteraction,
 	CacheType,
 	ButtonInteraction,
-	User
 } from 'discord.js';
 import ms from 'pretty-ms';
 
@@ -25,11 +24,6 @@ export default {
 	type: ApplicationCommandType.ChatInput,
 	run: async (client: BaseClient, interaction: CommandInteraction, args: string[]) => {
 		/* Types */
-		type Components = {
-			component1: any;
-			component2: any;
-		}
-
 		type Embeds = {
 			menu: EmbedBuilder;
 			main: Function;
@@ -47,7 +41,7 @@ export default {
 			ephemeral: false
 		});
 
-		const directories: any[] = [
+		const directories: Array<string> = [
 			...new Set(client.commands.map((cmd: any) => cmd.directory)),
 		],
 
@@ -68,8 +62,7 @@ export default {
 				};
 			}),
 
-			components: Components = {
-				component1: new ActionRowBuilder().addComponents(
+			component1 = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
 					new StringSelectMenuBuilder()
 						.setCustomId('menu-help')
 						.setPlaceholder('Select 1 or more categories')
@@ -83,7 +76,7 @@ export default {
 						),
 				),
 
-				component2: new ActionRowBuilder().addComponents(
+				component2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
 					new ButtonBuilder()
 						.setCustomId('button-home')
 						.setLabel('Home')
@@ -113,7 +106,6 @@ export default {
 							id: '1106778640856916099'
 						}),
 				),
-			},
 
 			embeds: Embeds = {
 				menu: new EmbedBuilder()
@@ -161,8 +153,8 @@ export default {
 							'```',
 						inline: true,
 					}, {
-						name: 'Author',
-						value: '```yaml\nDiscord: ' + await client.owner.then((user: User) => `${user.username}#${user.discriminator}`) + '\nGithub: Ziscul```',
+						name: 'Owner',
+						value: '```yaml\nDiscord: ' + (await client.application?.fetch() as any)?.owner?.toJSON()?.username as any + '\nGithub: Ziscul```',
 						inline: true,
 					}, {
 						name: 'Bot Status',
@@ -201,7 +193,7 @@ export default {
 
 			msg: Message = await interaction.followUp({
 				embeds: [embeds.menu],
-				components: [components.component1, components.component2],
+				components: [component1, component2],
 			}),
 
 			collectors: Collectors = {
@@ -232,7 +224,6 @@ export default {
 
 			await i.editReply({
 				embeds: [embeds.main(directory, category)],
-				components: []
 			});
 		});
 
@@ -256,16 +247,24 @@ export default {
 					.setCustomId('modal-contact')
 					.setTitle('Contact'),
 
-					input: TextInputBuilder = new TextInputBuilder()
+					title: TextInputBuilder = new TextInputBuilder()
+						.setCustomId('title-input')
+						.setLabel('Title')
+						.setPlaceholder('Type the title of your response here')
+						.setStyle(TextInputStyle.Paragraph)
+						.setMaxLength(30)
+						.setRequired(true),
+
+					message: TextInputBuilder = new TextInputBuilder()
 						.setCustomId('message-input')
 						.setLabel('Message')
-						.setPlaceholder('Type your question/issue here')
+						.setPlaceholder('Type your message here')
 						.setStyle(TextInputStyle.Paragraph)
-						.setMinLength(10)
+						.setMinLength(5)
 						.setMaxLength(100)
 						.setRequired(true),
 
-					actionRow: any = new ActionRowBuilder().addComponents(input);
+					actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(title, message);
 
 				modal.addComponents([actionRow]);
 				await i.showModal(modal);

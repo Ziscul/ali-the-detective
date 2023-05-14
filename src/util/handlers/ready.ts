@@ -1,31 +1,30 @@
-import { Events } from 'discord.js';
+import { CommandInteraction, Events } from 'discord.js';
 import { readdirSync } from 'fs';
 import BaseClient from '../BaseClient';
 
-const commands: any[] = [];
-
-type CommandOptions = {
-	default: {
-		name: string;
-		description: string;
-		type: number;
-		run: Function;
-	};
+interface CommandOptions {
+	name: string;
+	description: string;
+	type: number;
+	run: (interaction: CommandInteraction) => Promise<void>;
 }
 
-export default async function ready(client: BaseClient) {
-	readdirSync('./src/commands/utility').forEach(async (value: string) => {
-		const command: CommandOptions = require(`${process.cwd()}/src/commands/utility/${value}`);
+const commands: CommandOptions[] = [];
 
-		commands.push(command.default);
-		client.commands.set(command.default.name, { directory: 'utility', id: '', ...command.default });
+export default async function ready(client: BaseClient) {
+
+	readdirSync('./src/commands/utility').forEach(async (value: string) => {
+		const command: CommandOptions = (await import(`${process.cwd()}/src/commands/utility/${value}`)).default;
+
+		commands.push(command);
+		client.commands.set(command.name, { directory: 'utility', id: '', ...command });
 	});
 
 	readdirSync('./src/commands/economy').forEach(async (value: string) => {
-		const command: CommandOptions = require(`${process.cwd()}/src/commands/economy/${value}`);
+		const command: CommandOptions = (await import(`${process.cwd()}/src/commands/economy/${value}`)).default;
 
-		commands.push(command.default);
-		client.commands.set(command.default.name, { directory: 'economy', id: '', ...command.default });
+		commands.push(command);
+		client.commands.set(command.name, { directory: 'economy', id: '', ...command });
 	});
 
 	client.once(Events.ClientReady, async () =>
@@ -34,7 +33,7 @@ export default async function ready(client: BaseClient) {
 				(client.commands.get(cmd.name) as any).id = cmd.id;
 			});
 
-			console.log('Online.');
+			console.log('Commands Loaded');
 		}),
 	);
 }

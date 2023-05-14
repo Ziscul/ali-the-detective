@@ -44,16 +44,19 @@ export default async function interaction(client: BaseClient) {
 		if (interaction.isModalSubmit()) {
 			if (interaction.customId === 'modal-contact') {
 				const message: string = interaction.fields.getTextInputValue('message-input'),
+					title: string = interaction.fields.getTextInputValue('title-input'),
 					embeds: ContactEmbeds = {
 						main: new EmbedBuilder()
 							.setTitle('Successfully Sent')
 							.setDescription('Your message has been successfully sent to the owner.')
 							.setColor(0x4b9cd3)
 							.setTimestamp()
-							.setFooter({ text: 'Request sent', iconURL: interaction.user.displayAvatarURL({ extension: 'png' }), }),
+							.setFooter({ text: interaction.user.username, iconURL: interaction.user.displayAvatarURL({ extension: 'png' }), }),
 						request: new EmbedBuilder()
 							.setTitle('New Message')
+							.setDescription(`*${interaction.user.tag}* has sent a message`)
 							.addFields(
+								{ name: 'Title', value: title },
 								{ name: 'Message', value: message },
 							)
 							.setTimestamp()
@@ -63,7 +66,7 @@ export default async function interaction(client: BaseClient) {
 
 				await interaction.deferReply({ ephemeral: true });
 				await interaction.editReply({ embeds: [embeds.main] });
-				client.users.cache.get('893211748767768606')?.send({ embeds: [embeds.request] });
+				client.users.cache.get('1094120827601047653')?.send({ embeds: [embeds.request] });
 			}
 
 			if (interaction.customId === 'modal-compile') {
