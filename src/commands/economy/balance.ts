@@ -15,18 +15,16 @@ export default {
 		},
 	],
 	run: async (client: BaseClient, interaction: CommandInteraction, args: string[]) => {
-		/* Types */
-		type Profile = {
-			wallet: number,
-			bank: number,
-		};
+		interface Profile {
+			wallet: number;
+			bank: number;
+		}
 
-		type Embeds = {
+		interface Embeds {
 			bot: EmbedBuilder;
 			main: EmbedBuilder;
-		};
+		}
 
-		/* Interaction */
 		await interaction.deferReply({ ephemeral: false });
 
 		const user: User = client.users.cache.get(args[0]) || interaction.user,

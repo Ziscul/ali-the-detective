@@ -5,18 +5,16 @@ export default {
 	name: 'compile',
 	description: 'A safe, simple code compiler evaluation',
 	type: ApplicationCommandType.ChatInput,
-	run: async (_client: BaseClient, interaction: CommandInteraction, _args: string[]) => {
-		/* Types */
-		type Embeds = {
+	run: async (_client: BaseClient, interaction: CommandInteraction, args: string[]) => {
+		interface Embeds {
 			main: EmbedBuilder;
 			fail: EmbedBuilder;
-		};
+		}
 
-		type Collectors = {
+		interface Collectors {
 			collector1: InteractionCollector<ButtonInteraction<CacheType>>;
 		}
 
-		/* Interaction */
 		await interaction.deferReply({ ephemeral: false });
 
 		const component = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -68,12 +66,12 @@ export default {
 					.setTitle('Compile Code'),
 
 					inputLanguage: TextInputBuilder = new TextInputBuilder()
-							.setCustomId('language-input')
-							.setLabel('Programming Language')
-							.setPlaceholder('Enter what language your code is in here')
-							.setStyle(TextInputStyle.Short)
-							.setMaxLength(20)
-							.setRequired(true),
+						.setCustomId('language-input')
+						.setLabel('Programming Language')
+						.setPlaceholder('Enter what language your code is in here')
+						.setStyle(TextInputStyle.Short)
+						.setMaxLength(20)
+						.setRequired(true),
 
 					inputCode: TextInputBuilder = new TextInputBuilder()
 						.setCustomId('code-input')
@@ -82,9 +80,10 @@ export default {
 						.setStyle(TextInputStyle.Paragraph)
 						.setRequired(true),
 
-					actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(inputLanguage, inputCode);
+					actionLanguage = new ActionRowBuilder<TextInputBuilder>().addComponents(inputLanguage),
+					actionCode = new ActionRowBuilder<TextInputBuilder>().addComponents(inputCode);
 
-				modal.addComponents([actionRow]);
+				modal.addComponents([actionLanguage, actionCode]);
 				await i.showModal(modal);
 			}
 		});

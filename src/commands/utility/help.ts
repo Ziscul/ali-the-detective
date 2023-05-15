@@ -18,34 +18,35 @@ import {
 } from 'discord.js';
 import ms from 'pretty-ms';
 
+type Embeds = {
+	menu: EmbedBuilder;
+	main: (directory: string, category: any) => EmbedBuilder;
+	stats: EmbedBuilder;
+	fail: EmbedBuilder;
+}
+
+type Collectors = {
+	collector1: InteractionCollector<StringSelectMenuInteraction<CacheType>>;
+	collector2: InteractionCollector<ButtonInteraction<CacheType>>;
+}
+
 export default {
 	name: 'help',
 	description: 'Shows a list of commands, with a page of statistics',
 	type: ApplicationCommandType.ChatInput,
 	run: async (client: BaseClient, interaction: CommandInteraction, args: string[]) => {
-		/* Types */
-		type Embeds = {
-			menu: EmbedBuilder;
-			main: Function;
-			stats: EmbedBuilder;
-			fail: EmbedBuilder;
-		}
-
-		type Collectors = {
-			collector1: InteractionCollector<StringSelectMenuInteraction<CacheType>>;
-			collector2: InteractionCollector<ButtonInteraction<CacheType>>;
-		}
-
-		/* Interaction */
 		await interaction.deferReply({
 			ephemeral: false
 		});
 
-		const directories: Array<string> = [
-			...new Set(client.commands.map((cmd: any) => cmd.directory)),
-		],
+		const directories: Array<string> = Array.from(
+			new Set(
+				client.commands
+					.map((cmd: any) => cmd.directory)
+			)
+		),
 
-			formatString: Function = (str: string) => str[0].toUpperCase() + str.slice(1),
+			formatString = (str: string) => str[0].toUpperCase() + str.slice(1),
 			categories: any[] = directories.map((dir: string) => {
 				const getCommands = client.commands
 					.filter((cmd: any) => cmd.directory === dir)
@@ -63,49 +64,49 @@ export default {
 			}),
 
 			component1 = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
-					new StringSelectMenuBuilder()
-						.setCustomId('menu-help')
-						.setPlaceholder('Select 1 or more categories')
-						.addOptions(
-							categories.map((cmd: any) => {
-								return {
-									label: cmd.directory,
-									value: cmd.directory.toLowerCase(),
-								};
-							}),
-						),
-				),
+				new StringSelectMenuBuilder()
+					.setCustomId('menu-help')
+					.setPlaceholder('Select 1 or more categories')
+					.addOptions(
+						categories.map((cmd: any) => {
+							return {
+								label: cmd.directory,
+								value: cmd.directory.toLowerCase(),
+							};
+						}),
+					),
+			),
 
-				component2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-					new ButtonBuilder()
-						.setCustomId('button-home')
-						.setLabel('Home')
-						.setStyle(2)
-						.setEmoji({
-							id: '1106760305352118314'
-						}),
-					new ButtonBuilder()
-						.setCustomId('button-contact')
-						.setLabel('Contact')
-						.setStyle(2)
-						.setEmoji({
-							id: '1106760310779551815'
-						}),
-					new ButtonBuilder()
-						.setCustomId('button-stats')
-						.setLabel('Statistics')
-						.setStyle(2)
-						.setEmoji({
-							id: '1106760314164350987'
-						}),
-					new ButtonBuilder()
-						.setLabel('Server')
-						.setStyle(5)
-						.setURL('https://discord.gg/2F73YSej3w')
-						.setEmoji({
-							id: '1106778640856916099'
-						}),
-				),
+			component2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+				new ButtonBuilder()
+					.setCustomId('button-home')
+					.setLabel('Home')
+					.setStyle(2)
+					.setEmoji({
+						id: '1106760305352118314'
+					}),
+				new ButtonBuilder()
+					.setCustomId('button-contact')
+					.setLabel('Contact')
+					.setStyle(2)
+					.setEmoji({
+						id: '1106760310779551815'
+					}),
+				new ButtonBuilder()
+					.setCustomId('button-stats')
+					.setLabel('Statistics')
+					.setStyle(2)
+					.setEmoji({
+						id: '1106760314164350987'
+					}),
+				new ButtonBuilder()
+					.setLabel('Server')
+					.setStyle(5)
+					.setURL('https://discord.gg/2F73YSej3w')
+					.setEmoji({
+						id: '1106778640856916099'
+					}),
+			),
 
 			embeds: Embeds = {
 				menu: new EmbedBuilder()
@@ -121,11 +122,11 @@ export default {
 					})
 					.setColor(0x4b9cd3)
 					.setTimestamp(),
-				main: (directory: string, category: any) =>
+				main: (directory, category) =>
 					new EmbedBuilder()
 						.setTitle(formatString(directory) + ' Commands')
 						.setDescription(
-							category.commands.map((cmd: any) => 
+							category.commands.map((cmd: any) =>
 								`</${cmd.name}:${cmd.id}>\n<:connector:1106760308887928852> ${cmd.description}`,
 							).join('\n'),
 						)
@@ -247,15 +248,15 @@ export default {
 					.setCustomId('modal-contact')
 					.setTitle('Contact'),
 
-					title: TextInputBuilder = new TextInputBuilder()
+					inputTitle: TextInputBuilder = new TextInputBuilder()
 						.setCustomId('title-input')
 						.setLabel('Title')
-						.setPlaceholder('Type the title of your response here')
-						.setStyle(TextInputStyle.Paragraph)
+						.setPlaceholder('Type your title here')
+						.setStyle(TextInputStyle.Short)
 						.setMaxLength(30)
 						.setRequired(true),
 
-					message: TextInputBuilder = new TextInputBuilder()
+					inputMessage: TextInputBuilder = new TextInputBuilder()
 						.setCustomId('message-input')
 						.setLabel('Message')
 						.setPlaceholder('Type your message here')
@@ -264,9 +265,10 @@ export default {
 						.setMaxLength(100)
 						.setRequired(true),
 
-					actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(title, message);
+					actionTitle = new ActionRowBuilder<TextInputBuilder>().addComponents(inputTitle),
+					actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(inputMessage);
 
-				modal.addComponents([actionRow]);
+				modal.addComponents([actionTitle, actionRow]);
 				await i.showModal(modal);
 			}
 
@@ -278,8 +280,8 @@ export default {
 							content: null,
 							embeds: [embeds.stats],
 						}),
-					1000,
-				));
+						1000,
+					));
 			}
 		});
 	},
