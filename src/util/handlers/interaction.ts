@@ -19,10 +19,6 @@ interface Output {
 	program_output: string;
 }
 
-interface LanguageVersion {
-	name: string;
-}
-
 export default async function interaction(client: BaseClient) {
 	client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 		if (interaction.isChatInputCommand()) {
@@ -86,11 +82,11 @@ export default async function interaction(client: BaseClient) {
 
 				if (language.toLowerCase().startsWith('node')) languageInput = 'javascript';
 
-				getCompilers(languageInput).then((languageVersion: LanguageVersion) => {
-					fromString({ code, compiler: languageVersion.name }).then(async (output: Output) => {
+				getCompilers(languageInput).then((languageVersion: any) => {
+					fromString({ code, compiler: languageVersion[0].name }).then(async (output: Output) => {
 						const { program_error, program_output } = output;
-						if (program_error) await interaction.editReply({ embeds: [embeds.outputError(program_error, languageVersion.name)] });
-						else await interaction.editReply({ embeds: [embeds.output(program_output, languageVersion.name)] });
+						if (program_error) await interaction.editReply({ embeds: [embeds.outputError(program_error, languageVersion[0].name)] });
+						else await interaction.editReply({ embeds: [embeds.output(program_output, languageVersion[0].name)] });
 					}).catch(async (error: string) => await interaction.followUp({ embeds: [embeds.compileError(error)], ephemeral: true }));
 				}).catch(async (error: string) => await interaction.followUp({ embeds: [embeds.error(error)], ephemeral: true }));
 			}

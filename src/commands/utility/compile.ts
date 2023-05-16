@@ -11,10 +11,6 @@ export default {
 			fail: EmbedBuilder;
 		}
 
-		interface Collectors {
-			collector1: InteractionCollector<ButtonInteraction<CacheType>>;
-		}
-
 		await interaction.deferReply({ ephemeral: false });
 
 		const component = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -24,6 +20,13 @@ export default {
 				.setStyle(2)
 				.setEmoji({
 					id: '1106795011737133118'
+				}),
+			new ButtonBuilder()
+				.setCustomId('exit')
+				.setLabel('Exit')
+				.setStyle(4)
+				.setEmoji({
+					id: '1107881374305751111'
 				}),
 		),
 
@@ -46,13 +49,11 @@ export default {
 
 			msg: Message = await interaction.followUp({ embeds: [embeds.main], components: [component] }),
 
-			collectors: Collectors = {
-				collector1: msg.createMessageComponentCollector({
-					componentType: ComponentType.Button,
-				}),
-			};
+			collector1: InteractionCollector<ButtonInteraction<CacheType>> = msg.createMessageComponentCollector({
+				componentType: ComponentType.Button,
+			})
 
-		collectors.collector1.on('collect', async i => {
+		collector1.on('collect', async i => {
 			if (i.user.id !== interaction.user.id) {
 				await i.followUp({
 					embeds: [embeds.fail],
@@ -85,6 +86,14 @@ export default {
 
 				modal.addComponents([actionLanguage, actionCode]);
 				await i.showModal(modal);
+			} else {
+				component.components[0].setDisabled(true);
+				component.components[1].setDisabled(true);
+
+				await i.deferUpdate();
+				await i.editReply({ components: [component] });
+
+				collector1.stop();
 			}
 		});
 	},
