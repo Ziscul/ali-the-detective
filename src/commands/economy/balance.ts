@@ -27,7 +27,7 @@ export default {
 		if (user.bot) return await interaction.followUp({
 			embeds: [
 				new EmbedBuilder()
-					.setTitle(`Bots have money?`)
+					.setTitle('Bots have money?')
 					.setDescription('Look at that! Bots are most certainly rich.')
 					.addFields([
 						{ name: 'Wallet', value: '```fix\n✪ 5000000\n```', inline: true },
@@ -40,8 +40,8 @@ export default {
 						iconURL: interaction.user.displayAvatarURL({ extension: 'png' }),
 					})
 					.setTimestamp(),
-				],
-			});
+			],
+		});
 
 		const profile: Profile = await balance.findOne({ userID: user.id }) || await new balance({ userID: user.id }).save();
 
@@ -60,7 +60,7 @@ export default {
 					iconURL: interaction.user.displayAvatarURL({ extension: 'png' }),
 				})
 				.setTimestamp(),
-			],
+		],
 		});
 	},
 };

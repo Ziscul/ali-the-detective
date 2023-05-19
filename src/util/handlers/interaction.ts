@@ -1,17 +1,10 @@
 import { Interaction, Events, ApplicationCommandOptionType, EmbedBuilder } from 'discord.js';
 import BaseClient from '../BaseClient';
-const { fromString, getCompilers } = require('wandbox-api-updated');
+import { fromString, getCompilers, Compiler } from 'wandbox-api-updated';
 
 interface ContactEmbeds {
 	main: EmbedBuilder;
 	request: EmbedBuilder;
-}
-
-interface CompileEmbeds {
-	output: (programOutput: string, languageVersion: string) => EmbedBuilder;
-	outputError: (programError: string, languageVersion: string) => EmbedBuilder;
-	error: (message: string) => EmbedBuilder;
-	compileError: (message: string) => EmbedBuilder;
 }
 
 interface Output {
@@ -22,28 +15,20 @@ interface Output {
 export default async function interaction(client: BaseClient) {
 	client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 		if (interaction.isChatInputCommand()) {
-			const command: any = client.commands.get(interaction.commandName),
-				args: any[] = [];
+			const command = client.commands.get(interaction.commandName),
+				args: string[] = [];
 
 			if (!command) return;
 
 			for (const option of interaction.options.data) {
-				if (option.type === ApplicationCommandOptionType.Subcommand) {
-					option.name
-						? args.push(option.name)
-						: option.options?.forEach(
-							async (value: any) => {
-								if (value.value) {
-									args.push(value.value);
-								}
-							},
-						);
-				} else if (option.value) {
-					args.push(option.value);
+				if (option.type === ApplicationCommandOptionType.Subcommand)
+					args.push(option.name.toString());
+				else if (option.value) {
+					args.push(option.value.toString());
 				}
 			}
 
-			await command.run(client, interaction, args);
+			command.run(client, interaction, args);
 		}
 
 		if (interaction.isModalSubmit()) {
@@ -62,33 +47,62 @@ export default async function interaction(client: BaseClient) {
 
 			if (interaction.customId === 'modal-compile') {
 				const [language, code] = ['language-input', 'code-input'].map(f => interaction.fields.getTextInputValue(f));
-				const embeds: CompileEmbeds = {
-					output: (o, l) => new EmbedBuilder().setTitle('Compiled Code').setDescription(`Compiled and evaluated successfully. You can press the button again for the bot to run code again.\n\`\`\`${l}\`\`\``)
-						.addFields({ name: 'Compiled Input', value: `\`\`\`${language}\n${code}\n\`\`\``, inline: true },
-							{ name: 'Compiled Output', value: `\`\`\`${o ? language : ''}\n${o ? o : 'No output was received while evaluating.'}\n\`\`\`` })
-						.setColor(0x4b9cd3).setTimestamp().setFooter({ text: 'Compilied', iconURL: interaction.user.displayAvatarURL({ extension: 'png' }) }),
-					outputError: (e: string, l: string) => new EmbedBuilder().setTitle('Compiling Error').setDescription(`There was an error in your given code.\n\`\`\`${l}\`\`\``)
-						.addFields({ name: 'Compiled Input', value: `\`\`\`${language}\n${code}\n\`\`\``, inline: true },
-							{ name: 'Compiling Error', value: `\`\`\`${e}\n\`\`\`` })
-						.setColor(0xfa5f55).setTimestamp().setFooter({ text: 'Error', iconURL: interaction.user.displayAvatarURL({ extension: 'png' }) }),
-					error: (m: string) => new EmbedBuilder().setDescription(`${m} View all of the [availabe languages here](https://github.com/srz-zumix/wandbox-api#cli).\nIn addition, try not to use aliases. (\`py\` > \`python\`)`)
-						.setColor(0xfa5f55),
-					compileError: (m: string) => new EmbedBuilder().setDescription(`${m}. Try pressing the \`Insert Code\` button to try again.`).setColor(0xfa5f55),
-				};
-
 				let languageInput: string = language;
 
 				await interaction.deferUpdate();
 
 				if (language.toLowerCase().startsWith('node')) languageInput = 'javascript';
 
-				getCompilers(languageInput).then((languageVersion: any) => {
-					fromString({ code, compiler: languageVersion[0].name }).then(async (output: Output) => {
+				getCompilers(languageInput).then((languageVersions: Compiler[]) => {
+					fromString({
+						code,
+						compiler: languageVersions[0].name,
+						save: false
+					}).then(async (output: Output) => {
 						const { program_error, program_output } = output;
-						if (program_error) await interaction.editReply({ embeds: [embeds.outputError(program_error, languageVersion[0].name)] });
-						else await interaction.editReply({ embeds: [embeds.output(program_output, languageVersion[0].name)] });
-					}).catch(async (error: string) => await interaction.followUp({ embeds: [embeds.compileError(error)], ephemeral: true }));
-				}).catch(async (error: string) => await interaction.followUp({ embeds: [embeds.error(error)], ephemeral: true }));
+						if (program_error) await interaction.editReply({
+							embeds: [
+								new EmbedBuilder()
+									.setTitle('Compiling Error')
+									.setDescription(`There was an error in your given code.\n\`${languageVersions[0].name}\``)
+									.addFields(
+										{ name: 'Compiled Input', value: `\`\`\`${language}\n${code}\n\`\`\``, inline: true },
+										{ name: 'Compiling Error', value: `\`\`\`${program_error}\n\`\`\`` }
+									)
+									.setColor(0xfa5f55)
+									.setTimestamp()
+									.setFooter({ text: 'Error', iconURL: interaction.user.displayAvatarURL({ extension: 'png' }) }),
+							]
+						});
+						else await interaction.editReply({
+							embeds: [
+								new EmbedBuilder()
+									.setTitle('Compiled Code')
+									.setDescription(`Compiled and evaluated successfully. You can press the button again for the bot to run code again.\n\`${languageVersions[0].name}\``)
+									.addFields(
+										{ name: 'Compiled Input', value: `\`\`\`${language}\n${code}\n\`\`\``, inline: true },
+										{ name: 'Compiled Output', value: `\`\`\`${program_output ? language : ''}\n${program_output ? program_output : 'No output was received while evaluating.'}\n\`\`\`` }
+									)
+									.setColor(0x4b9cd3)
+									.setTimestamp()
+									.setFooter({ text: 'Compiled', iconURL: interaction.user.displayAvatarURL({ extension: 'png' }) }),
+							]
+						});
+					}).catch(async (error: string) => await interaction.followUp({
+						embeds: [
+							new EmbedBuilder()
+								.setDescription(`${error}. Try pressing the \`Insert Code\` button to try again.`)
+								.setColor(0xfa5f55),
+						], ephemeral: true
+					})
+					);
+				}).catch(async (error: string) => await interaction.followUp({
+					embeds: [
+						new EmbedBuilder()
+							.setDescription(`${error} View all of the [available languages here](https://github.com/srz-zumix/wandbox-api#cli).\nIn addition, try not to use aliases. (\`py\` > \`python\`)`)
+							.setColor(0xfa5f55),
+					], ephemeral: true
+				}));
 			}
 		}
 	});

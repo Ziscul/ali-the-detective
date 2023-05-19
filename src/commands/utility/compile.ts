@@ -5,7 +5,7 @@ export default {
 	name: 'compile',
 	description: 'A safe, simple code compiler evaluation',
 	type: ApplicationCommandType.ChatInput,
-	run: async (_client: BaseClient, interaction: CommandInteraction, args: string[]) => {
+	run: async (_client: BaseClient, interaction: CommandInteraction) => {
 		interface Embeds {
 			main: EmbedBuilder;
 			fail: EmbedBuilder;
@@ -51,7 +51,7 @@ export default {
 
 			collector1: InteractionCollector<ButtonInteraction<CacheType>> = msg.createMessageComponentCollector({
 				componentType: ComponentType.Button,
-			})
+			});
 
 		collector1.on('collect', async i => {
 			if (i.user.id !== interaction.user.id) {

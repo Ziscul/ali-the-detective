@@ -1,4 +1,4 @@
-import { CommandInteraction, Events } from 'discord.js';
+import { ApplicationCommand, CommandInteraction } from 'discord.js';
 import { readdirSync } from 'fs';
 import BaseClient from '../BaseClient';
 
@@ -6,34 +6,34 @@ interface CommandOptions {
 	name: string;
 	description: string;
 	type: number;
-	run: (interaction: CommandInteraction) => Promise<void>;
+	options?: object[];
+	id: string;
+	directory: string;
+	run: (client: BaseClient, interaction: CommandInteraction, args?: string[]) => Promise<void>;
 }
 
-const commands: CommandOptions[] = [];
-
 export default async function ready(client: BaseClient) {
+	const directories = ['./src/commands/utility', './src/commands/economy'];
 
-	readdirSync('./src/commands/utility').forEach(async (value: string) => {
-		const command: CommandOptions = (await import(`${process.cwd()}/src/commands/utility/${value}`)).default;
+	for (const directory of directories) {
+		readdirSync(directory).forEach(async (value: string) => {
+			const command: CommandOptions = (await import(`${process.cwd()}/${directory}/${value}`)).default;
+			command.directory = directory.split('/').pop() || '';
+			command.id = '';
 
-		commands.push(command);
-		client.commands.set(command.name, { directory: 'utility', id: '', ...command });
+			client.commands.set(command.name, { ...command });
+		});
+	}
+
+	const fetchedCommands = await client.application?.commands.fetch();
+	const commands = fetchedCommands?.toJSON() as ApplicationCommand[];
+
+	commands?.forEach((cmd: ApplicationCommand) => {
+		const command = client.commands.get(cmd.name);
+		if (command) {
+			command.id = cmd.id;
+		}
 	});
 
-	readdirSync('./src/commands/economy').forEach(async (value: string) => {
-		const command: CommandOptions = (await import(`${process.cwd()}/src/commands/economy/${value}`)).default;
-
-		commands.push(command);
-		client.commands.set(command.name, { directory: 'economy', id: '', ...command });
-	});
-
-	client.once(Events.ClientReady, async () =>
-		await client?.application?.commands?.set(commands).then(async () => {
-			(await client.application?.commands.fetch())?.toJSON().map((cmd) => {
-				(client.commands.get(cmd.name) as any).id = cmd.id;
-			});
-
-			console.log('Commands Loaded');
-		}),
-	);
+	console.log('Commands Loaded');
 }

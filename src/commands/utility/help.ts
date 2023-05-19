@@ -17,10 +17,11 @@ import {
 	ButtonInteraction,
 } from 'discord.js';
 import ms from 'pretty-ms';
+import { Command } from '../../../global';
 
 type Embeds = {
 	menu: EmbedBuilder;
-	main: (directory: string, category: any) => EmbedBuilder;
+	main: (directory: string, category: Category) => EmbedBuilder;
 	stats: EmbedBuilder;
 	fail: EmbedBuilder;
 }
@@ -30,11 +31,16 @@ type Collectors = {
 	collector2: InteractionCollector<ButtonInteraction<CacheType>>;
 }
 
+interface Category {
+	directory: string;
+	commands: Array<{ name: string, description: string, id: string }>;
+}
+
 export default {
 	name: 'help',
 	description: 'Shows a list of commands, with a page of statistics',
 	type: ApplicationCommandType.ChatInput,
-	run: async (client: BaseClient, interaction: CommandInteraction, args: string[]) => {
+	run: async (client: BaseClient, interaction: CommandInteraction) => {
 		await interaction.deferReply({
 			ephemeral: false
 		});
@@ -42,15 +48,15 @@ export default {
 		const directories: Array<string> = Array.from(
 			new Set(
 				client.commands
-					.map((cmd: any) => cmd.directory)
+					.map((cmd: Command) => cmd.directory)
 			)
 		),
 
 			formatString = (str: string) => str[0].toUpperCase() + str.slice(1),
-			categories: any[] = directories.map((dir: string) => {
+			categories: Category[] = directories.map((dir: string) => {
 				const getCommands = client.commands
-					.filter((cmd: any) => cmd.directory === dir)
-					.map((cmd: any) => {
+					.filter((cmd: Command) => cmd.directory === dir)
+					.map((cmd: Command) => {
 						return {
 							name: cmd.name,
 							description: cmd.description,
@@ -68,7 +74,7 @@ export default {
 					.setCustomId('menu-help')
 					.setPlaceholder('Select 1 or more categories')
 					.addOptions(
-						categories.map((cmd: any) => {
+						categories.map((cmd) => {
 							return {
 								label: cmd.directory,
 								value: cmd.directory.toLowerCase(),
@@ -126,7 +132,7 @@ export default {
 					new EmbedBuilder()
 						.setTitle(formatString(directory) + ' Commands')
 						.setDescription(
-							category.commands.map((cmd: any) =>
+							category.commands.map((cmd) =>
 								`</${cmd.name}:${cmd.id}>\n<:connector:1106760308887928852> ${cmd.description}`,
 							).join('\n'),
 						)
@@ -150,12 +156,12 @@ export default {
 					}, {
 						name: 'Uptime',
 						value: '```yaml\nStatus: Online\nUptime: ' +
-							ms((client as any).uptime) +
+							ms((client.uptime as number)) +
 							'```',
 						inline: true,
 					}, {
 						name: 'Owner',
-						value: '```yaml\nDiscord: ' + (await client.application?.fetch() as any)?.owner?.toJSON()?.username as any + '\nGithub: Ziscul```',
+						value: '```yaml\nDiscord: Ziscul#7710\nGithub: Ziscul```',
 						inline: true,
 					}, {
 						name: 'Bot Status',
@@ -206,34 +212,38 @@ export default {
 				}),
 			};
 
-		collectors.collector1.on('collect', async (i: any) => {
+		collectors.collector1.on('collect', async (i) => {
 			if (i.user.id !== interaction.user.id) {
-				return await i.followUp({
+				await i.followUp({
 					embeds: [embeds.fail],
 					ephemeral: true,
 				});
+
+				return;
 			}
 
 			collectors.collector1.resetTimer();
 			collectors.collector2.resetTimer();
 
 			await i.deferUpdate();
-			const [directory]: string = i.values;
-			const category: any[] = categories.find(
-				(cmd: any) => cmd.directory.toLowerCase() === directory,
+			const [directory]: string[] = i.values;
+			const category: Category | undefined = categories.find(
+				(cmd) => cmd.directory.toLowerCase() === directory,
 			);
 
 			await i.editReply({
-				embeds: [embeds.main(directory, category)],
+				embeds: [embeds.main(directory, (category as Category))],
 			});
 		});
 
-		collectors.collector2.on('collect', async (i: any) => {
+		collectors.collector2.on('collect', async (i) => {
 			if (i.user.id !== interaction.user.id) {
-				return await i.reply({
+				await i.reply({
 					embeds: [embeds.fail],
 					ephemeral: true,
 				});
+
+				return;
 			}
 
 			if (i.customId === 'button-home') {
@@ -280,7 +290,7 @@ export default {
 							content: null,
 							embeds: [embeds.stats],
 						}),
-						1000,
+					1000,
 					));
 			}
 		});
